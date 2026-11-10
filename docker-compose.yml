@@ -29,6 +29,19 @@ services:
         condition: service_healthy
     restart: unless-stopped
 
+  frontend:
+    build:
+      context: ./frontend
+      target: final
+    ports:
+      - "3000:80"
+    environment:
+      # The browser calls the API, so this is the host-visible address, not the service name.
+      API_BASE_URL: "http://localhost:8080"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
   # ---- tests (not started by plain `docker compose up`) ---------------------------------
   db-test:
     profiles: ["test"]
