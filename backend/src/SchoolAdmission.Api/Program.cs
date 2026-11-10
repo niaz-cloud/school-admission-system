@@ -2,6 +2,7 @@ using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Http.Json;
 using Microsoft.EntityFrameworkCore;
 using SchoolAdmission.Api.Data;
+using SchoolAdmission.Api.Features.Classes;
 using SchoolAdmission.Api.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -66,6 +67,7 @@ app.UseStatusCodePages(async context =>
 app.UseCors(CorsPolicy);
 
 app.MapGet("/health", () => TypedResults.Ok(new { status = "ok" }));
+app.MapClassEndpoints();
 
 await DbInitializer.InitializeAsync(app.Services);
 
