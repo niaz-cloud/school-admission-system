@@ -1,5 +1,7 @@
 using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Http.Json;
+using Microsoft.EntityFrameworkCore;
+using SchoolAdmission.Api.Data;
 using SchoolAdmission.Api.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -7,6 +9,11 @@ var builder = WebApplication.CreateBuilder(args);
 // ---- configuration ------------------------------------------------------------------
 builder.Services.AddSingleton(sp => AdmissionOptions.FromConfiguration(sp.GetRequiredService<IConfiguration>()));
 builder.Services.AddSingleton(TimeProvider.System);
+
+// Resolved lazily from IConfiguration so tests (and env vars) can override the connection string.
+// Note: no EnableRetryOnFailure — it is incompatible with the explicit transactions used for locking.
+builder.Services.AddDbContext<AppDbContext>((sp, options) =>
+    options.UseNpgsql(sp.GetRequiredService<IConfiguration>().GetConnectionString("Default")));
 
 // ---- JSON: camelCase properties, UPPERCASE enum names, UTC "Z" timestamps -------------
 builder.Services.Configure<JsonOptions>(options =>
@@ -59,6 +66,8 @@ app.UseStatusCodePages(async context =>
 app.UseCors(CorsPolicy);
 
 app.MapGet("/health", () => TypedResults.Ok(new { status = "ok" }));
+
+await DbInitializer.InitializeAsync(app.Services);
 
 app.Run();
 
