@@ -29,5 +29,33 @@ services:
         condition: service_healthy
     restart: unless-stopped
 
+  # ---- tests (not started by plain `docker compose up`) ---------------------------------
+  db-test:
+    profiles: ["test"]
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: school_admission_test
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    command: ["postgres", "-c", "max_connections=300"]
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d school_admission_test"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  backend-tests:
+    profiles: ["test"]
+    build:
+      context: ./backend
+      target: test
+    environment:
+      TEST_DATABASE_URL: "Host=db-test;Port=5432;Database=school_admission_test;Username=postgres;Password=postgres;Maximum Pool Size=200"
+    depends_on:
+      db-test:
+        condition: service_healthy
+
 volumes:
   pgdata:
