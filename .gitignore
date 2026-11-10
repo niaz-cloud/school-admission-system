@@ -1,0 +1,20 @@
+# .NET
+bin/
+obj/
+*.user
+TestResults/
+# Node
+node_modules/
+dist/
+coverage/
+# Env / secrets
+.env
+.env.*
+# Assignment brief must never be published
+*.pdf
+# OS / editors
+.DS_Store
+Thumbs.db
+.vs/
+.vscode/
+.idea/
