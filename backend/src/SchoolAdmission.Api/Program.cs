@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http.Json;
 using Microsoft.EntityFrameworkCore;
 using SchoolAdmission.Api.Data;
 using SchoolAdmission.Api.Features.Classes;
+using SchoolAdmission.Api.Features.Holds;
 using SchoolAdmission.Api.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -15,6 +16,8 @@ builder.Services.AddSingleton(TimeProvider.System);
 // Note: no EnableRetryOnFailure — it is incompatible with the explicit transactions used for locking.
 builder.Services.AddDbContext<AppDbContext>((sp, options) =>
     options.UseNpgsql(sp.GetRequiredService<IConfiguration>().GetConnectionString("Default")));
+builder.Services.AddScoped<HoldService>();
+builder.Services.AddHostedService<ExpiredHoldSweeper>();
 
 // ---- JSON: camelCase properties, UPPERCASE enum names, UTC "Z" timestamps -------------
 builder.Services.Configure<JsonOptions>(options =>
@@ -68,6 +71,7 @@ app.UseCors(CorsPolicy);
 
 app.MapGet("/health", () => TypedResults.Ok(new { status = "ok" }));
 app.MapClassEndpoints();
+app.MapHoldEndpoints();
 
 await DbInitializer.InitializeAsync(app.Services);
 
